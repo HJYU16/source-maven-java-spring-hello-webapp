@@ -1,13 +1,8 @@
-FROM jenkins/jenkins:lts-jdk17
-USER root
-RUN apt-get update && apt-get install -y lsb-release
-RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \
-  https://download.docker.com/linux/debian/gpg
-RUN echo "deb [arch=$(dpkg --print-architecture) \
-  signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
-  https://download.docker.com/linux/debian \
-  $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-RUN apt-get update && apt-get install -y docker-ce-cli
-USER jenkins
-RUN jenkins-plugin-cli --plugins "docker-plugin docker-workflow"
+FROM maven:3-openjdk-17 AS mbuilder
+RUN mkdir /hello
+RUN git clone https://github.com/KIMJINW00/source-maven-java-spring-hello-webapp /hello
+WORKDIR /hello
+RUN mvn package
 
+FROM tomcat:9-jre17
+COPY --from=mbuilder /hello/target/hello-world.war /usr/local/tomcat/webapps/
